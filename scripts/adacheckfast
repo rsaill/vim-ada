@@ -1,0 +1,10 @@
+#!/bin/bash
+fullname=$1
+basename=${fullname##*/}
+search=$(sed 's/[^^]/[&]/g; s/\^/\\^/g' <<< "${basename,,}:")
+replace=$(sed 's/[&/\]/\\&/g' <<< "$fullname:")
+
+project=/full/path/to/myproject.gpr
+autoconf=/full/path/to/auto.cgpr
+
+gprbuild -ws -c -u -P$project -Xmode=debug --autoconf=$autoconf $basename 2>&1 | sed "s/$search/$replace/"
