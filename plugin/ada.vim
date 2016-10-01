@@ -1,4 +1,3 @@
-" Go to Spec/Body
 function! ToggleSpecImplem()
 	let fn_no_ext = expand('%:r')
 	let ext = expand('%:e')
