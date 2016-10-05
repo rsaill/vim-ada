@@ -1,0 +1,10 @@
+#!/bin/bash
+fullname=$1
+basename=${fullname##*/}
+basename_no_ext=${basename%.*}
+project=/path/to/Project.gpr
+adt_dir=/path/to/Objects
+coding_rules=/path/to/Coding_rules.aru
+
+gprbuild -ws -c -u -f -P $project -gnatct -gnatef -Xmode=verbose $basename
+adactl -F GNAT -f $coding_rules $basename -- -FT -C1 $adt_dir/$basename_no_ext.adt
