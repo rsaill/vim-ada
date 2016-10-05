@@ -28,7 +28,8 @@ inoremap <buffer> <C-Space> <C-n>
 setlocal cc=80
 
 " Syntastic
-let g:syntastic_mode_map = { 'mode': 'passive' }
+"let g:syntastic_mode_map = { 'mode': 'passive' }
+let g:syntastic_ada_checkers=['adacheckfile']
 let g:syntastic_always_populate_loc_list = 1
 let g:syntastic_auto_loc_list = 1
 nnoremap <buffer> <F3> :SyntasticCheck gcc<cr>
@@ -68,3 +69,45 @@ let g:tagbar_type_ada = {
 
 " NERDCommenter
 noremap <silent> <F2> :call NERDComment("n", "Toggle")<CR>
+
+" User-defined completion
+
+fun! CompleteInPackage(findstart, base)
+	if a:findstart
+		" locate the start of the word
+		let line = getline('.')
+		let start = col('.') - 1
+		while start > 0 && (line[start - 1] =~ '\w' || line[start - 1] =~ '\.')
+			let start -= 1
+		endwhile
+		return start
+	else
+		let res = []
+		let lst = split(a:base,'\.',1)
+		let tag = lst[-1]
+		let l = len(lst)
+		let taglst = taglist('^'.tag)
+		if l > 1 
+			let pkg = join(lst[0:-2],'.')
+			"echom "-> base=" . a:base . " tag=" . tag . " pkg=" . pkg
+			for dico in taglst 
+				if has_key(dico,'packspec')
+					"echom 'packspec:' . dico['packspec']
+					if dico['packspec'] ==# pkg
+						call add(res, pkg . '.' . dico['name'])
+					endif
+				endif
+			endfor
+		else
+			"echom "-> base=" . a:base . " tag=" . tag . " no pkg"
+			for dico in taglst
+				if has_key(dico,'packspec')
+					"echom 'has_key'
+					call add(res, dico['packspec'] . '.' . dico['name'])
+				endif
+			endfor
+		endif	
+		return res
+	endif
+endfun
+set completefunc=CompleteInPackage
