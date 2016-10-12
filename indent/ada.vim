@@ -4,7 +4,7 @@ endfunction
 
 function! GetPreviousNonBlankLine()
 	if v:lnum <= 1
-		return 1
+		return 0
 	else
 		let nb = v:lnum - 1
 		while 1
@@ -14,7 +14,7 @@ function! GetPreviousNonBlankLine()
 				return nb
 			else
 				if nb <= 1
-					return 1
+					return 0
 				else
 					let nb = nb - 1
 				endif
@@ -23,72 +23,81 @@ function! GetPreviousNonBlankLine()
 	endif
 endfunction
 
-let s:start_kw = '\<procedure\>\|\<function\>\|\<package\>\|\<while\>\|\<if\>\_s*[^;]' 
-let s:middle_kw = '\<is\>\|\<begin\>\|\<loop\>\|\<then\>\|\<else\>' 
-let s:end_kw = '\<end\>' 
+let s:start_kw = '\<is\_s\+[^an]\|\<is\_s\+n[^e]\|\<is\_s\+ne[^w]\|\<is\_s\+a[^r]\|\<is\_s\+ar[^r]\|\<is\_s\+arr[^a]\|\<is\_s\+arra[^y]\|\<while\>\|\<if\>\_s*[^;]\|\<for\>\|(' 
+let s:end_kw = '\<end\>\|)' 
+let s:skip ='synIDattr(synID(line("."), col("."), 0), "name") ' . '=~? "string\\|comment"'
+
+function! GetBlockIndent()
+	" Get the indentation in the current block.
+	" If the block begins with '(', the indentation is the column of the
+	" first non blank character following the '('
+	" Otherwise, the indentation is the indentation of the line containing
+	" the begining of the block + 3
+	" When there is no block, the indentation is 0
+
+	let [ln,cn] = searchpairpos(s:start_kw,'',s:end_kw,'bW',s:skip)
+	if ln > 0
+		echo 'getline(ln)[cn-1] = ' . getline(ln)[cn-1] 
+		if getline(ln)[cn-1] =~ '('
+			let line_ln = GetLineWithoutComments(ln)
+			return matchend(line_ln, '(\s*', cn-1)
+		else
+			return indent(ln) + 3
+		endif
+	endif
+
+	return 0
+endfunction
+
+let s:dec = '\<procedure\>\|\<function\>\|\<type\>'
+let s:middle_kw = '\<begin\>\|\<loop\>\|\<then\>\|\<else\>\|\<elsif\>\|\<record\>' 
 
 function! GetAdaIndent()
 
 	" First line of the file
 	if v:lnum <= 1
-		"echom 'first line'
 		return 0
 	endif 
 
-	" blank line
-	if getline(v:lnum) =~ '^\s*$'
-		"echom 'blank line'
-		return 0
-	endif
-
-	let s_skip ='synIDattr(synID(line("."), col("."), 0), "name") ' . '=~? "string\\|comment"'
+	" If the line is blank or fully commented, we take the indent of the
+	" current block
 	let current_line = GetLineWithoutComments(v:lnum)
 
 	" Commented line
 	if current_line =~ '^\s*$'
-		"echom 'commented line'
-		let [ln,cn] = searchpairpos(s:start_kw,'',s:end_kw,'b',s_skip)
-		return indent(ln) + 3
+		return GetBlockIndent()
 	endif
 
-	" middle/end block keyword
-	if ( current_line =~? s:middle_kw || current_line =~? s:end_kw ) && ( current_line !~? '^\s*\(' . s:start_kw . '\)' )
-		"echom 'middle/end block line'
-		let [ln,cn] = searchpairpos(s:start_kw,'',s:end_kw,'b',s_skip)
+	" If the line begins with an intermediate or block ending keyword, we take the indentation
+	" of the line containing the corresponding opening kewyword
+	if ( current_line =~? '^\s*\(' . s:middle_kw . '\|' . s:end_kw . '\)' )
+		let [ln,cn] = searchpairpos(s:start_kw,'',s:end_kw,'bW',s:skip)
 		return indent(ln)
 	endif
 
+	" If the line begins with 'is', we take the indentation of the
+	" corresponding defined entity (package, type, record, etc)
+	if current_line =~ '^\s*\<is\>'
+		let [ln,cn] = searchpos(s:dec,'bW')
+		return indent(ln)
+	endif
+	
+	" If the line is a begining of statement, we take the indentation of
+	" the current block.
+	" A line is a beginning of statement if the previous line ends with
+	" ',', ';' or a begining or intermediate block keyword or 'is'
 	let previous_line_number = GetPreviousNonBlankLine()
+	if previous_line_number == 0
+		return 0
+	endif
 	let previous_line = GetLineWithoutComments(l:previous_line_number)
-
-	" previous line terminated by ;
-	if l:previous_line =~? ';\s*$'
-		"echom 'previous line ends with ;'
-		let [ln,cn] = searchpairpos('(','',')','bW',s_skip,v:lnum-15)
-		if ln > 0
-			let ind = matchend(GetLineWithoutComments(ln), '(\s*', cn-1)
-			return ind
-		else
-			let [ln,cn] = searchpairpos(s:start_kw,'',s:end_kw,'bW',s_skip)
-			if ln > 0
-				return (indent(ln) + 3)
-			else
-				return 0
-			endif
-		endif
+	if l:previous_line =~? '[;,]\s*$' || l:previous_line =~? '\(' . s:middle_kw . '\)\s*$' || l:previous_line =~? '\(' . s:start_kw . '\)\s*$' || l:previous_line =~? '\<is\>\s*$'
+		return GetBlockIndent()
 	endif
 
-	" last line terminated by ,
-	if l:previous_line =~? ',\s*$'
-		"echom 'previous line ends with ,'
-		let [ln,cn] = searchpairpos('(','',')','bW',s_skip)
-		let ind = matchend(GetLineWithoutComments(ln), '(\s*', cn-1)
-		return ind
-	endif
+	" Otherwise the line is a continuation of statement, so the indent is that
+	" of the previous line + 2
+	return indent(previous_line_number) + 2
 
-	" otherwise
-	"echom 'nothing special'
-	let ind = indent(previous_line_number) + 3
-	return ind
 endfunction
 setlocal indentexpr=GetAdaIndent()
