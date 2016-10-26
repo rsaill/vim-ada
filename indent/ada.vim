@@ -23,7 +23,7 @@ function! GetPreviousNonBlankLine()
 	endif
 endfunction
 
-let s:start_kw = '\<is\_s\+[^an]\|\<is\_s\+n[^e]\|\<is\_s\+ne[^w]\|\<is\_s\+a[^r]\|\<is\_s\+ar[^r]\|\<is\_s\+arr[^a]\|\<is\_s\+arra[^y]\|\<while\>\|\<if\>\_s*[^;]\|\<for\>\|(' 
+let s:start_kw = '\<declare\>\|\<is\_s\+[^an]\|\<is\_s\+n[^e]\|\<is\_s\+ne[^w]\|\<is\_s\+a[^r]\|\<is\_s\+ar[^r]\|\<is\_s\+arr[^a]\|\<is\_s\+arra[^y]\|\<while\>\|\<if\>\_s*[^;]\|\<for\>\|(' 
 let s:end_kw = '\<end\>\|)' 
 let s:skip ='synIDattr(synID(line("."), col("."), 0), "name") ' . '=~? "string\\|comment"'
 
@@ -37,7 +37,6 @@ function! GetBlockIndent()
 
 	let [ln,cn] = searchpairpos(s:start_kw,'',s:end_kw,'bW',s:skip)
 	if ln > 0
-		echo 'getline(ln)[cn-1] = ' . getline(ln)[cn-1] 
 		if getline(ln)[cn-1] =~ '('
 			let line_ln = GetLineWithoutComments(ln)
 			return matchend(line_ln, '(\s*', cn-1)
@@ -85,13 +84,13 @@ function! GetAdaIndent()
 	" If the line is a begining of statement, we take the indentation of
 	" the current block.
 	" A line is a beginning of statement if the previous line ends with
-	" ',', ';' or a begining or intermediate block keyword or 'is'
+	" ',', ';', '=>' or a begining or intermediate block keyword or 'is'
 	let previous_line_number = GetPreviousNonBlankLine()
 	if previous_line_number == 0
 		return 0
 	endif
 	let previous_line = GetLineWithoutComments(l:previous_line_number)
-	if l:previous_line =~? '[;,]\s*$' || l:previous_line =~? '\(' . s:middle_kw . '\)\s*$' || l:previous_line =~? '\(' . s:start_kw . '\)\s*$' || l:previous_line =~? '\<is\>\s*$'
+	if l:previous_line =~? '[;,]\s*$' || l:previous_line =~? '\(' . s:middle_kw . '\)\s*$' || l:previous_line =~? '\(' . s:start_kw . '\)\s*$' || l:previous_line =~? '\<is\>\s*$' || l:previous_line =~? '=>\s*$'
 		return GetBlockIndent()
 	endif
 
