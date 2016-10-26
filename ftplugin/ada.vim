@@ -4,6 +4,9 @@ endif
 
 let b:did_ftplugin = 45
 
+"nnoremap <buffer> <C-p> :vert bo ptj <C-R>=expand("<cword>")<CR><CR>
+nnoremap <buffer> * :let @/="<C-r>=expand("<cword>")<CR>"<CR>
+
 " MEMO
 " For generating tags use the following command:
 " ls -R dir1 dir2 dir3 | grep '.ads$' | ctags -L -
@@ -72,42 +75,45 @@ noremap <silent> <F2> :call NERDComment("n", "Toggle")<CR>
 
 " User-defined completion
 
-fun! CompleteInPackage(findstart, base)
-	if a:findstart
-		" locate the start of the word
-		let line = getline('.')
-		let start = col('.') - 1
-		while start > 0 && (line[start - 1] =~ '\w' || line[start - 1] =~ '\.')
-			let start -= 1
-		endwhile
-		return start
-	else
-		let res = []
-		let lst = split(a:base,'\.',1)
-		let tag = lst[-1]
-		let l = len(lst)
-		let taglst = taglist('^'.tag)
-		if l > 1 
-			let pkg = join(lst[0:-2],'.')
-			"echom "-> base=" . a:base . " tag=" . tag . " pkg=" . pkg
-			for dico in taglst 
-				if has_key(dico,'packspec')
-					"echom 'packspec:' . dico['packspec']
-					if dico['packspec'] ==# pkg
-						call add(res, pkg . '.' . dico['name'])
-					endif
-				endif
-			endfor
-		else
-			"echom "-> base=" . a:base . " tag=" . tag . " no pkg"
-			for dico in taglst
-				if has_key(dico,'packspec')
-					"echom 'has_key'
-					call add(res, dico['packspec'] . '.' . dico['name'])
-				endif
-			endfor
-		endif	
-		return res
-	endif
-endfun
-set completefunc=CompleteInPackage
+"fun! CompleteInPackage(findstart, base)
+"	if a:findstart
+"		" locate the start of the word
+"		let line = getline('.')
+"		let start = col('.') - 1
+"		while start > 0 && (line[start - 1] =~ '\w' || line[start - 1] =~ '\.')
+"			let start -= 1
+"		endwhile
+"		return start
+"	else
+"		let res = []
+"		let lst = split(a:base,'\.',1)
+"		let tag = lst[-1]
+"		let l = len(lst)
+"		let taglst = taglist('^'.tag)
+"		if l > 1 
+"			let pkg = join(lst[0:-2],'.')
+"			"echom "-> base=" . a:base . " tag=" . tag . " pkg=" . pkg
+"			for dico in taglst 
+"				if has_key(dico,'packspec')
+"					"echom 'packspec:' . dico['packspec']
+"					if dico['packspec'] ==# pkg
+"						call add(res, pkg . '.' . dico['name'])
+"					endif
+"				endif
+"			endfor
+"		else
+"			"echom "-> base=" . a:base . " tag=" . tag . " no pkg"
+"			for dico in taglst
+"				if has_key(dico,'packspec')
+"					"echom 'has_key'
+"					call add(res, dico['packspec'] . '.' . dico['name'])
+"				endif
+"			endfor
+"		endif	
+"		return res
+"	endif
+"endfun
+
+setlocal previewheight=80
+set completefunc=AdaC
+nnoremap <buffer> <silent> <C-p> :call Locate()<CR>
