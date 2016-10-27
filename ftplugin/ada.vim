@@ -4,31 +4,16 @@ endif
 
 let b:did_ftplugin = 45
 
-"nnoremap <buffer> <C-p> :vert bo ptj <C-R>=expand("<cword>")<CR><CR>
-nnoremap <buffer> * :let @/="<C-r>=expand("<cword>")<CR>"<CR>
-
-" MEMO
-" For generating tags use the following command:
-" ls -R dir1 dir2 dir3 | grep '.ads$' | ctags -L -
 
 " Indentation
 
 setlocal expandtab
 setlocal shiftwidth=3
 setlocal softtabstop=3
-" TODO use custum indent function
-
-" Go to Spec/Body
-nnoremap <F1> :call ToggleSpecImplem()<cr>
-
-" Completion
-
-setlocal complete=.,t
-inoremap <buffer> <C-Space> <C-n>
-" TODO add custum omnicompletion function
 
 " Misc
 setlocal cc=80
+nnoremap <buffer> * :let @/="<C-r>=expand("<cword>")<CR>"<CR>
 
 " Syntastic
 "let g:syntastic_mode_map = { 'mode': 'passive' }
@@ -73,47 +58,69 @@ let g:tagbar_type_ada = {
 " NERDCommenter
 noremap <silent> <F2> :call NERDComment("n", "Toggle")<CR>
 
-" User-defined completion
+" Completion
 
-"fun! CompleteInPackage(findstart, base)
-"	if a:findstart
-"		" locate the start of the word
-"		let line = getline('.')
-"		let start = col('.') - 1
-"		while start > 0 && (line[start - 1] =~ '\w' || line[start - 1] =~ '\.')
-"			let start -= 1
-"		endwhile
-"		return start
-"	else
-"		let res = []
-"		let lst = split(a:base,'\.',1)
-"		let tag = lst[-1]
-"		let l = len(lst)
-"		let taglst = taglist('^'.tag)
-"		if l > 1 
-"			let pkg = join(lst[0:-2],'.')
-"			"echom "-> base=" . a:base . " tag=" . tag . " pkg=" . pkg
-"			for dico in taglst 
-"				if has_key(dico,'packspec')
-"					"echom 'packspec:' . dico['packspec']
-"					if dico['packspec'] ==# pkg
-"						call add(res, pkg . '.' . dico['name'])
-"					endif
-"				endif
-"			endfor
-"		else
-"			"echom "-> base=" . a:base . " tag=" . tag . " no pkg"
-"			for dico in taglst
-"				if has_key(dico,'packspec')
-"					"echom 'has_key'
-"					call add(res, dico['packspec'] . '.' . dico['name'])
-"				endif
-"			endfor
-"		endif	
-"		return res
-"	endif
-"endfun
+if !exists('*Completion')
+	function! Completion(findstart, base)
+		if a:findstart
+			" locate the start of the word
+			let line = getline('.')
+			let start = col('.') - 1
+			while start > 0 && (line[start - 1] =~ '\w' || line[start - 1] =~ '\.')
+				let start -= 1
+			endwhile
+			return start
+		else
+			let res = systemlist("adac -search '" . a:base . "'")
+			return res
+		endif
+	endfun
+endif
 
+setlocal complete=.
+inoremap <buffer> <C-Space> <C-n>
+set completefunc=Completion
+
+" Navigation
+
+if !exists('*ToggleSpecImplem')
+	function! ToggleSpecImplem()
+		let fn_no_ext = expand('%:r')
+		let ext = expand('%:e')
+
+		if ext ==? "adb"
+			execute "normal! :e " . fn_no_ext . ".ads\<cr>"
+		elseif ext ==? "ads"
+			execute "normal! :e " . fn_no_ext . ".adb\<cr>"
+		endif
+	endfunction
+endif
+
+if !exists('*Locate')
+	function! Locate()
+		let word = expand('<cfile>') " FIXME this is hacky
+		let lst = systemlist("adac -locate '" . word . "'")
+		"echom "adac -locate '" . word . "'"
+		if !empty(lst)
+			"    echom "lst[0] is " . lst[0]
+			execute "vert bo pedit +" . lst[1] . " " . lst[0]
+		endif
+	endfun
+endif
+
+if !exists('*GoToDef')
+	function! GoToDef()
+		let word = expand('<cfile>') " FIXME this is hacky
+		let lst = systemlist("adac -locate '" . word . "'")
+		"echom "adac -locate '" . word . "'"
+		if !empty(lst)
+			"    echom "lst[0] is " . lst[0]
+			execute "edit +" . lst[1] . " " . lst[0]
+		endif
+	endfun
+endif
+
+nnoremap <F1> :call ToggleSpecImplem()<cr>
 setlocal previewheight=80
-set completefunc=AdaC
 nnoremap <buffer> <silent> <C-p> :call Locate()<CR>
+nnoremap <buffer> <silent> <C-]> :call GoToDef()<CR>
