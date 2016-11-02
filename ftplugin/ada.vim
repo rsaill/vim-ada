@@ -71,7 +71,7 @@ if !exists('*Completion')
 			endwhile
 			return start
 		else
-			let res = systemlist("adac -search '" . a:base . "'")
+			let res = systemlist("adaquery -p myproject -search '" . a:base . "'")
 			return res
 		endif
 	endfun
@@ -99,8 +99,8 @@ endif
 if !exists('*Locate')
 	function! Locate()
 		let word = expand('<cfile>') " FIXME this is hacky
-		let lst = systemlist("adac -locate '" . word . "'")
-		"echom "adac -locate '" . word . "'"
+		let lst = systemlist("adaquery -p myproject -locate '" . word . "'")
+		"echom "adaquery -p myproject -locate '" . word . "'"
 		if !empty(lst)
 			"    echom "lst[0] is " . lst[0]
 			execute "vert bo pedit +" . lst[1] . " " . lst[0]
@@ -111,8 +111,8 @@ endif
 if !exists('*GoToDef')
 	function! GoToDef()
 		let word = expand('<cfile>') " FIXME this is hacky
-		let lst = systemlist("adac -locate '" . word . "'")
-		"echom "adac -locate '" . word . "'"
+		let lst = systemlist("adaquery -p myproject -locate '" . word . "'")
+		"echom "adaquery -p myproject -locate '" . word . "'"
 		if !empty(lst)
 			"    echom "lst[0] is " . lst[0]
 			execute "edit +" . lst[1] . " " . lst[0]
