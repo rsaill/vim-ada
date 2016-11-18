@@ -23,7 +23,7 @@ function! GetPreviousNonBlankLine()
 	endif
 endfunction
 
-let s:start_kw = '\<declare\>\|\<is\_s\+[^an]\|\<is\_s\+n[^e]\|\<is\_s\+ne[^w]\|\<is\_s\+a[^r]\|\<is\_s\+ar[^r]\|\<is\_s\+arr[^a]\|\<is\_s\+arra[^y]\|\<while\>\|\<if\>\_s*[^;]\|\<for\>\|(' 
+let s:start_kw = '\<declare\>\|\<is\_s\+[^an( \t\n\r]\|\<is\_s\+n[^e]\|\<is\_s\+ne[^w]\|\<is\_s\+a[^r]\|\<is\_s\+ar[^r]\|\<is\_s\+arr[^a]\|\<is\_s\+arra[^y]\|\<while\>\|\<if\>\_s*[^;]\|\<for\>\|(' 
 let s:end_kw = '\<end\>\|)' 
 let s:skip ='synIDattr(synID(line("."), col("."), 0), "name") ' . '=~? "string\\|comment"'
 
@@ -31,6 +31,8 @@ function! GetBlockIndent()
 	" Get the indentation in the current block.
 	" If the block begins with '(', the indentation is the column of the
 	" first non blank character following the '('
+	" If the block begins with 'case ... is', the indentation is  column of the the
+	" identation of the line containing 'case' + 6
 	" Otherwise, the indentation is the indentation of the line containing
 	" the begining of the block + 3
 	" When there is no block, the indentation is 0
@@ -40,6 +42,8 @@ function! GetBlockIndent()
 		if getline(ln)[cn-1] =~ '('
 			let line_ln = GetLineWithoutComments(ln)
 			return matchend(line_ln, '(\s*', cn-1)
+		elseif getline(ln) =~? '\<case\>.*\<is\>'
+			return indent(ln) + 6
 		else
 			return indent(ln) + 3
 		endif
@@ -91,7 +95,17 @@ function! GetAdaIndent()
 	endif
 	let previous_line = GetLineWithoutComments(l:previous_line_number)
 	if l:previous_line =~? '[;,]\s*$' || l:previous_line =~? '\(' . s:middle_kw . '\)\s*$' || l:previous_line =~? '\(' . s:start_kw . '\)\s*$' || l:previous_line =~? '\<is\>\s*$' || l:previous_line =~? '=>\s*$'
-		return GetBlockIndent()
+		if current_line =~? '^\s*\<when\>'
+			return GetBlockIndent() - 3
+		else
+			return GetBlockIndent()
+		endif
+	endif
+
+	" If the line starts with return and the previous line ends with ')'
+	" we take the indent of the current block
+	if current_line =~? '^\s*\<return\>' && l:previous_line =~? ')\s*$'
+		return GetBlockIndent() + 2
 	endif
 
 	" Otherwise the line is a continuation of statement, so the indent is that
