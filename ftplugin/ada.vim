@@ -99,7 +99,8 @@ endif
 if !exists('*Locate')
 	function! Locate()
 		let word = expand('<cfile>') " FIXME this is hacky
-		let lst = systemlist("adaquery -p myproject -locate '" . word . "'")
+		let scope = expand('%:t:r')
+		let lst = systemlist("adaquery -p myproject -locate '" . word . "' -scope '" .scope . "'")
 		"echom "adaquery -p myproject -locate '" . word . "'"
 		if !empty(lst)
 			"    echom "lst[0] is " . lst[0]
@@ -111,7 +112,8 @@ endif
 if !exists('*GoToDef')
 	function! GoToDef()
 		let word = expand('<cfile>') " FIXME this is hacky
-		let lst = systemlist("adaquery -p myproject -locate '" . word . "'")
+		let scope = expand('%:t:r')
+		let lst = systemlist("adaquery -p myproject -locate '" . word . "' -scope '" .scope . "'")
 		"echom "adaquery -p myproject -locate '" . word . "'"
 		if !empty(lst)
 			"    echom "lst[0] is " . lst[0]
