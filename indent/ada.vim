@@ -94,12 +94,16 @@ function! GetAdaIndent()
 		return 0
 	endif
 	let previous_line = GetLineWithoutComments(l:previous_line_number)
-	if l:previous_line =~? '[;,]\s*$' || l:previous_line =~? '\(' . s:middle_kw . '\)\s*$' || l:previous_line =~? '\(' . s:start_kw . '\)\s*$' || l:previous_line =~? '\<is\>\s*$' || l:previous_line =~? '=>\s*$'
+	if l:previous_line =~? '[;,]\s*$' || l:previous_line =~? '\(' . s:middle_kw . '\)\s*$' || l:previous_line =~? '\(' . s:start_kw . '\)\s*$' || l:previous_line =~? '\<is\>\s*$' " || l:previous_line =~? '=>\s*$'
 		if current_line =~? '^\s*\<when\>'
 			return GetBlockIndent() - 3
 		else
 			return GetBlockIndent()
 		endif
+	endif
+
+	if l:previous_line =~? '=>\s*$'
+		return indent(previous_line_number) + 3
 	endif
 
 	" If the line starts with return and the previous line ends with ')'
