@@ -71,7 +71,7 @@ if !exists('*Completion')
 			endwhile
 			return start
 		else
-			let res = systemlist("adaquery -p myproject -search '" . a:base . "'")
+			let res = systemlist("adaquery -p myproject -complete '" . a:base . "'")
 			return res
 		endif
 	endfun
@@ -102,7 +102,9 @@ if !exists('*Locate')
 		let scope = expand('%:t:r')
 		let lst = systemlist("adaquery -p myproject -locate '" . word . "' -scope '" .scope . "'")
 		"echom "adaquery -p myproject -locate '" . word . "'"
-		if !empty(lst)
+		if !v:shell_error
+			echo "Location not found."
+		elseif !empty(lst)
 			"    echom "lst[0] is " . lst[0]
 			execute "vert bo pedit +" . lst[1] . " " . lst[0]
 		endif
@@ -115,7 +117,9 @@ if !exists('*GoToDef')
 		let scope = expand('%:t:r')
 		let lst = systemlist("adaquery -p myproject -locate '" . word . "' -scope '" .scope . "'")
 		"echom "adaquery -p myproject -locate '" . word . "'"
-		if !empty(lst)
+		if !v:shell_error
+			echo "Location not found."
+		elseif !empty(lst)
 			"    echom "lst[0] is " . lst[0]
 			execute "edit +" . lst[1] . " " . lst[0]
 		endif
