@@ -101,8 +101,8 @@ if !exists('*Locate')
 		let word = expand('<cfile>') " FIXME this is hacky
 		let scope = expand('%:t:r')
 		let lst = systemlist("adaquery -p myproject -locate '" . word . "' -scope '" .scope . "'")
-		"echom "adaquery -p myproject -locate '" . word . "'"
-		if !v:shell_error
+		"echom "adaquery -p myproject -locate '" . word . "' -scope '" .scope . "'"
+		if v:shell_error
 			echo "Location not found."
 		elseif !empty(lst)
 			"    echom "lst[0] is " . lst[0]
@@ -116,8 +116,8 @@ if !exists('*GoToDef')
 		let word = expand('<cfile>') " FIXME this is hacky
 		let scope = expand('%:t:r')
 		let lst = systemlist("adaquery -p myproject -locate '" . word . "' -scope '" .scope . "'")
-		"echom "adaquery -p myproject -locate '" . word . "'"
-		if !v:shell_error
+		"echom "adaquery -p myproject -locate '" . word . "' -scope '" .scope . "'"
+		if v:shell_error
 			echo "Location not found."
 		elseif !empty(lst)
 			"    echom "lst[0] is " . lst[0]
