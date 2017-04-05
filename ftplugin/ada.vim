@@ -71,8 +71,14 @@ if !exists('*Completion')
 			endwhile
 			return start
 		else
-			let res = systemlist("adaquery -p myproject -complete '" . a:base . "'")
-			return res
+			let scope = expand('%:t:r')
+			let res = systemlist("adaquery -p myproject -complete '" . a:base . "' -scope '" . scope . "'")
+			if v:shell_error
+				echo "Location not found."
+				return []
+			else
+				return res
+			endif
 		endif
 	endfun
 endif
